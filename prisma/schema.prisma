@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model NavbarSettings {
+  id        Int      @id @default(1)
+  brandName String
+  logoUrl   String
+  navLinks  Json?
+  ctaText   String?
+  ctaHref   String?
+  updatedAt DateTime @updatedAt
+  tagline   String?
+}
+
+model HeroSettings {
+  id            String   @id @default(cuid())
+  headlineLine1 String?
+  headlineLine2 String?
+  description   String?
+  mediaType     String   @default("video")
+  mediaUrl      String   @default("/videos/hero-bg.mp4")
+  videoUrl      String?
+  imageUrl      String?
+  mediaOpacity  String   @default("45")
+  clients       String[]
+  updatedAt     DateTime @updatedAt
+}
+
+model AboutSettings {
+  id           Int      @id @default(1)
+  sectionTitle String   @default("About Us")
+  tabData      Json?
+  imagePath    String?  @default("/images/about_Image.png")
+  overlayLabel String?  @default("Impact Metric")
+  overlayTitle String?  @default("100+ Organizations Empowered")
+  overlayBadge String?  @default("AI")
+  updatedAt    DateTime @updatedAt
+}
+
+model ExpertiseSettings {
+  id           Int      @id @default(1)
+  sectionTitle String
+  pillars      Json
+  updatedAt    DateTime @updatedAt
+}
+
+model ServicesSettings {
+  id                 Int      @id @default(1)
+  sectionTitle       String
+  enterpriseServices Json
+  individualServices Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model ProjectsSettings {
+  id             String    @id
+  sectionTitle   String    @default("Our Projects")
+  projects       Json
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  projectRecords Project[]
+}
+
+model Project {
+  id                 String           @id
+  badge              String
+  title              String
+  description        String
+  icon               String?
+  targetPartners     String
+  focusDomain        String
+  deliverables       Json
+  displayOrder       Int              @default(0)
+  projectsSettingsId String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @default(now()) @updatedAt
+  projectsSettings   ProjectsSettings @relation(fields: [projectsSettingsId], references: [id], onDelete: Cascade)
+  images             ProjectImage[]
+
+  @@index([projectsSettingsId])
+  @@index([displayOrder])
+}
+
+model ProjectImage {
+  id           Int      @id @default(autoincrement())
+  imageData    String
+  displayOrder Int      @default(0)
+  projectId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model MethodologySettings {
+  id                 Int      @id @default(1)
+  sectionBadge       String
+  sectionTitle       String
+  sectionDescription String
+  steps              Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model FooterSettings {
+  id                  Int      @id @default(1)
+  badgeText           String
+  headingText         String
+  companyName         String
+  companyRegistration String
+  email               String
+  phone               String
+  contactPerson       String
+  copyrightText       String
+  privacyPolicyText   String
+  privacyPolicyHref   String
+  termsText           String
+  termsHref           String
+  socialLinks         Json
+  offices             Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model TeamSettings {
+  id           Int      @id @default(1)
+  members      Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sectionTitle String   @default("The people behind our work.")
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}

@@ -1,65 +1,138 @@
-import Image from "next/image";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import About, { type AboutData } from "@/components/About";
+import Expertise, { type ExpertiseData } from "@/components/Expertise";
+import Services, { type ServicesData } from "@/components/Services";
+import Projects, { type ProjectData } from "@/components/Projects";
+import Methodology, { type MethodologyData } from "@/components/Methodology";
+import Team, { type TeamMember } from "@/components/Team";
+import Footer, { type FooterData } from "@/components/Footer";
+import { prisma } from "@/lib/prisma";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [
+    aboutData,
+    expertiseData,
+    servicesData,
+    projectsSettingsData,
+    projectsData,
+    methodologyData,
+    teamData,
+    footerData,
+  ] = await Promise.all([
+    prisma.aboutSettings.findUnique({
+      where: { id: 1 },
+    }),
+
+    prisma.expertiseSettings.findUnique({
+      where: { id: 1 },
+    }),
+
+    prisma.servicesSettings.findUnique({
+      where: { id: 1 },
+    }),
+
+    prisma.projectsSettings.findUnique({
+      where: { id: "projects" },
+      select: {
+        sectionTitle: true,
+      },
+    }),
+
+    prisma.project.findMany({
+      where: {
+        projectsSettingsId: "projects",
+      },
+      orderBy: {
+        displayOrder: "asc",
+      },
+      select: {
+        id: true,
+        badge: true,
+        title: true,
+        description: true,
+        icon: true,
+        targetPartners: true,
+        focusDomain: true,
+        deliverables: true,
+        images: {
+          orderBy: {
+            displayOrder: "asc",
+          },
+          select: {
+            imageData: true,
+            displayOrder: true,
+          },
+        },
+      },
+    }),
+
+    prisma.methodologySettings.findUnique({
+      where: { id: 1 },
+    }),
+
+    prisma.teamSettings.findUnique({
+  where: { id: 1 },
+}),
+
+    prisma.footerSettings.findUnique({
+      where: { id: 1 },
+    }),
+  ]);
+
+  const mappedProjects: ProjectData[] = projectsData.map((project) => ({
+    id: project.id,
+    badge: project.badge,
+    title: project.title,
+    description: project.description,
+    icon: project.icon || "globe",
+    images: project.images
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((image) => image.imageData),
+    targetPartners: project.targetPartners,
+    focusDomain: project.focusDomain,
+    deliverables: Array.isArray(project.deliverables)
+      ? project.deliverables.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [],
+  }));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <Navbar />
+
+      <Hero />
+
+      <About data={aboutData as AboutData | null} />
+
+      <Expertise data={expertiseData as ExpertiseData | null} />
+
+      <Services data={servicesData as ServicesData | null} />
+
+      <Projects
+        data={mappedProjects}
+        sectionTitle={projectsSettingsData?.sectionTitle || "Our Projects"}
+      />
+
+      <Methodology data={methodologyData as MethodologyData | null} />
+
+      <Team
+  data={
+    teamData
+      ? {
+          sectionTitle: teamData.sectionTitle,
+          members: Array.isArray(teamData.members)
+            ? (teamData.members as unknown as TeamMember[])
+            : [],
+        }
+      : null
+  }
+/>
+
+      <Footer data={footerData as FooterData | null} />
     </div>
   );
 }
